@@ -1,0 +1,33 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const adminController_1 = require("../controllers/adminController");
+const auth_1 = require("../middlewares/auth");
+const router = express_1.default.Router();
+router.get('/users', auth_1.protect, auth_1.restrictToAdmin, adminController_1.getAllUsers);
+router.get('/users/:id', auth_1.protect, auth_1.restrictToAdmin, adminController_1.getUserDetails);
+router.patch('/users/:id/status', auth_1.protect, auth_1.restrictToAdmin, adminController_1.updateUserStatus);
+router.delete('/users/:id', auth_1.protect, auth_1.restrictToAdmin, adminController_1.deleteUser);
+router.get('/system/stats', auth_1.protect, auth_1.restrictToAdmin, adminController_1.getSystemStats);
+router.get('/dashboard', auth_1.protect, auth_1.restrictToAdmin, adminController_1.getDashboardMetrics);
+router.post('/roles', auth_1.protect, auth_1.restrictToAdmin, adminController_1.createRole);
+router.patch('/roles/:id', auth_1.protect, auth_1.restrictToAdmin, adminController_1.updateRole);
+router.delete('/roles/:id', auth_1.protect, auth_1.restrictToAdmin, adminController_1.deleteRole);
+router.get('/roles', auth_1.protect, auth_1.restrictToAdmin, adminController_1.listRoles);
+router.post('/permissions', auth_1.protect, auth_1.restrictToAdmin, adminController_1.createPermission);
+router.patch('/permissions/:id', auth_1.protect, auth_1.restrictToAdmin, adminController_1.updatePermission);
+router.delete('/permissions/:id', auth_1.protect, auth_1.restrictToAdmin, adminController_1.deletePermission);
+router.get('/permissions', auth_1.protect, auth_1.restrictToAdmin, adminController_1.listPermissions);
+router.get('/audit-logs', auth_1.protect, auth_1.restrictToAdmin, adminController_1.getAuditLogs);
+router.get('/config', auth_1.protect, auth_1.restrictToAdmin, adminController_1.getSystemConfig);
+router.patch('/config', auth_1.protect, auth_1.restrictToAdmin, adminController_1.updateSystemConfig);
+router.get('/blockchain/stats', auth_1.protect, auth_1.restrictToAdmin, adminController_1.getBlockchainStats);
+router.post('/blockchain/sync', auth_1.protect, auth_1.restrictToAdmin, adminController_1.syncBlockchainData);
+router.post('/rewards', auth_1.protect, auth_1.restrictToAdmin, adminController_1.createRewardConfig);
+router.patch('/rewards/:id', auth_1.protect, auth_1.restrictToAdmin, adminController_1.updateRewardConfig);
+router.get('/rewards', auth_1.protect, auth_1.restrictToAdmin, adminController_1.listRewardConfigs);
+exports.default = router;
+//# sourceMappingURL=adminRoutes.js.map
