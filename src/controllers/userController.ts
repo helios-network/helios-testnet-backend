@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import User from '../models/User';
 import { AuthRequest } from '../middlewares/auth';
 import { SortOrder } from 'mongoose';
+import XPActivity from '../models/XPActivity';
+import config from "../config/index"
 
 // Register a new user
 export const registerUser = async (req: AuthRequest, res: Response) => {
@@ -227,3 +229,69 @@ export const getUserNFTs = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const getUserLevelInfo = async (req: any, res: any) => {
+    try {
+      const user = req.user;
+      
+      // Get user's total XP (sum all XP activities)
+      const userXpData = await XPActivity.aggregate([
+        { $match: { user: user._id } },
+        { $group: { _id: null, totalXp: { $sum: "$amount" } } }
+      ]);
+      
+      const totalXP: number = userXpData.length > 0 ? userXpData[0].totalXp : 0;
+      
+      // Get the user's current level based on XP_LEVELS in config
+      const levels: any = config.XP_LEVELS;
+      let currentLevel = 1;
+      let nextLevelXP = levels[2]; // Default to level 2 requirement
+      
+      // Find the user's current level
+      for (let level = Object.keys(levels).length; level >= 1; level--) {
+        if (totalXP >= levels[level]) {
+          currentLevel = level;
+          
+          // Set next level XP target
+          if (levels[level + 1]) {
+            nextLevelXP = levels[level + 1];
+          } else {
+            // If user is at max level, set next level same as current
+            nextLevelXP = levels[level];
+          }
+          break;
+        }
+      }
+      
+      // Calculate XP progress to next level
+      const currentLevelXP = levels[currentLevel];
+      const xpNeededForNextLevel = nextLevelXP - currentLevelXP;
+      const xpProgress = totalXP - currentLevelXP;
+      
+      // Calculate percentage progress to next level (0-100)
+      let progressToNextLevel = 0;
+      if (xpNeededForNextLevel > 0) {
+        progressToNextLevel = Math.min(100, Math.floor((xpProgress / xpNeededForNextLevel) * 100));
+      } else {
+        // If at max level
+        progressToNextLevel = 100;
+      }
+      
+      res.status(200).json({
+        success: true,
+        currentLevel: currentLevel,
+        totalXP,
+        nextLevelXP,
+        xpForCurrentLevel: currentLevelXP,
+        xpNeededForNextLevel,
+        progressToNextLevel,
+        isMaxLevel: !levels[currentLevel + 1]
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to retrieve user level information',
+        error: error.message
+      });
+    }
+  };

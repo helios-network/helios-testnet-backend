@@ -32,6 +32,7 @@ export const protect = async (
       token, 
       config.JWT_SECRET
     ) as { wallet: string };
+    console.log(decoded)
 
     // Find user
     const user = await User.findOne({ 

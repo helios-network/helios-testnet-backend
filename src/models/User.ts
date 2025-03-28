@@ -28,6 +28,7 @@ export interface IUser extends Document {
   // Progression System
   xp: number;
   level: number;
+  onboardingCompleted: boolean;
   
   // Onboarding & Contributor System
   onboardingSteps: string[];
@@ -79,6 +80,11 @@ const UserSchema: Schema<IUser> = new Schema({
     maxlength: 30,
     unique: true,
     sparse: true
+  },
+
+  onboardingCompleted: {
+    type: Boolean,
+    default: false
   },
   
   // Optional Email
@@ -266,6 +272,7 @@ UserSchema.statics.createWithWallet = async function(wallet: string) {
     xp: 0,
     level: 1,
     onboardingSteps: [],
+    onboardingCompleted: false,
     contributorStatus: ContributorStatus.NONE,
     contributionXP: 0 // Initialize contribution XP
   });

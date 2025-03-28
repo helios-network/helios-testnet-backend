@@ -5,7 +5,8 @@ import {
   updateUserProfile, 
   getUserStats,
   searchUsers,
-  getUserNFTs
+  getUserNFTs,
+  getUserLevelInfo,
 } from '../controllers/userController';
 import { 
   verifyWalletSignature, 
@@ -16,6 +17,8 @@ import {
     validateRegistration,
     validateProfileUpdate 
 } from '../validators/userValidators';
+import User from '../models/User';
+import { generateToken } from "../middlewares/auth"
 
 const router = express.Router();
 
@@ -54,6 +57,93 @@ router.post(
   registerUser
 );
 
+/**
+ * @openapi
+ * /api/users/login:
+ *   post:
+ *     summary: Login with wallet signature
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - wallet
+ *               - signature
+ *             properties:
+ *               wallet:
+ *                 type: string
+ *               signature:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       401:
+ *         description: Authentication failed
+ */
+router.post(
+    '/login',
+    verifyWalletSignature,
+    async (req, res) => {
+      try {
+        // The wallet is already verified by middleware
+        const { wallet } = req.body;
+        
+        // Find the existing user
+        const user = await User.findOne({ wallet: wallet.toLowerCase() });
+        
+        if (!user) {
+          return res.status(401).json({
+            success: false,
+            message: 'User not found. Please register first.'
+          });
+        }
+        
+        // Generate JWT token
+        const token = generateToken(user.wallet);
+        
+        // Return user data and token
+        res.status(200).json({
+          success: true,
+          token,
+          user: {
+            _id: user._id,
+            wallet: user.wallet,
+            username: user.username,
+            createdAt: user.createdAt
+          }
+        });
+      } catch (error) {
+        console.log(error)
+        res.status(500).json({
+          success: false,
+          message: 'Login failed',
+          error: error.message
+        });
+      }
+    }
+  );
+
+
+/**
+ * @openapi
+ * /api/users/xp/level:
+ *   get:
+ *     summary: Get user's current level and XP progress
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Level info retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/xp/level', protect, getUserLevelInfo);
+
+  
 /**
  * @openapi
  * /api/users/profile/{wallet}:
